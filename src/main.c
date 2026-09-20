@@ -23,11 +23,17 @@ int main(int argc, char *argv[])
 
     if (!init_chip8(&chip8,argv[1])) return 0;
 
+    InitAudioDevice();
+
+    Sound beep_sound = LoadSound("resources/beep.mp3");
+    if (!IsSoundValid(beep_sound)) {
+        printf("Erro ao carregar o som\n");
+
+        CloseAudioDevice();
+        return 1;
+    }
 
     InitWindow(SCREEN_WIDHT, SCREEN_HEIGHT, "Chip-8 Emulator");
-    InitAudioDevice();
-    
-    Sound beepSound = LoadSound("resources/beep.mp3");
     
     SetTargetFPS(60);
 
@@ -45,11 +51,11 @@ int main(int argc, char *argv[])
         if (chip8.delay_timer > 0) chip8.delay_timer--;
 
         if (chip8.sound_timer > 0) {
-            if (!IsSoundPlaying(beepSound)) {
-                PlaySound(beepSound);
+            if (!IsSoundPlaying(beep_sound)) {
+                PlaySound(beep_sound);
             }
             chip8.sound_timer--;
-        }else StopSound(beepSound);
+        }else StopSound(beep_sound);
 
         BeginDrawing();
             ClearBackground(BLACK);
