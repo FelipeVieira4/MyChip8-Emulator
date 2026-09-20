@@ -1,15 +1,56 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
 #include "chip8.h"
 #include "mystdint.h"
 
-void init_chip8(chip8_s *chip8,const char *rom_name){
-    chip8->pc=0x200;
+const u8 font_sheet[80] =
+{ 
+  0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+  0x20, 0x60, 0x20, 0x20, 0x70, // 1
+  0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+  0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+  0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+  0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+  0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+  0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+  0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+  0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+  0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+  0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+  0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+  0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+  0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+  0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+};
+
+bool init_chip8(chip8_s *chip8,const char *rom_name){
+    chip8->pc=PROGRAM_START;
     chip8->opcode=0;
     chip8->stack_pointer=0;
     chip8->index=0;
 
-    for (uint8_t font_pos=0;font_pos<80;font_pos++){
-        chip8->memory[font_pos]=font_sheet[font_pos];
+    memcpy(&chip8->memory[FONT_START], font_sheet, FONT_SIZE);
+
+    // carrega a ROM
+    FILE *file_rom = fopen(rom_name, "rb");
+    if (!file_rom) {
+        printf("Erro ao abrir a ROM: %s\n", rom_name);
+        return false;
     }
+
+    size_t max_size = MEMORY_RAM - PROGRAM_START;   // 3584 bytes
+    size_t lidos = fread(&chip8->memory[PROGRAM_START], 1, max_size, file_rom);
+    fclose(file_rom);
+
+    if (lidos == 0) {
+        printf("ROM vazia ou erro de leitura\n");
+        return false;
+    }
+
+    return true;
 }
 
 bool emulation_cycle(chip8_s *chip8){
@@ -19,7 +60,9 @@ bool emulation_cycle(chip8_s *chip8){
 
     chip8->pc+=2; //avançar 2 registros
 
-    // registers sheet
+    // registers sheet (não é a forma mais performatico mas é melhor
+    // para escrita e entendimento das funcionalides dos registros)
+
     u8  x   = (chip8->opcode >> 8) & 0xF;
     u8  y   = (chip8->opcode >> 4) & 0xF;
     u8  n   = chip8->opcode       & 0xF;
@@ -76,31 +119,36 @@ bool emulation_cycle(chip8_s *chip8){
             case 0x2: chip8->v_registers[x] &= chip8->v_registers[y]; break;
             case 0x3: chip8->v_registers[x] ^= chip8->v_registers[y]; break;
 
-            case 0x4:                         // 8XY4: soma com carry
+            case 0x4: {                         // 8XY4: soma com carry
                 u16 soma = chip8->v_registers[x] + chip8->v_registers[y];
                 chip8->v_registers[x] = soma & 0xFF;
                 chip8->v_registers[0xF] = (soma > 0xFF);
                 break;
-            case 0x5:                           // 8XY5: Vx -= Vy
+            }
+            case 0x5: {                         // 8XY5: Vx -= Vy
                 u8 flag = (chip8->v_registers[x] >= chip8->v_registers[y]);
                 chip8->v_registers[x] -= chip8->v_registers[y];
                 chip8->v_registers[0xF] = flag;
                 break;
-            case 0x6:                             // 8XY6: Vx >>= 1
+            }
+            case 0x6: {                         // 8XY6: Vx >>= 1
                 u8 flag = chip8->v_registers[x] & 0x1;
                 chip8->v_registers[x] >>= 1;
                 chip8->v_registers[0xF] = flag;
                 break;
-            case 0x7:                            // 8XY7: Vx = Vy - Vx
+            }
+            case 0x7: {                         // 8XY7: Vx = Vy - Vx
                 u8 flag = (chip8->v_registers[y] >= chip8->v_registers[x]);
                 chip8->v_registers[x] = chip8->v_registers[y] - chip8->v_registers[x];
                 chip8->v_registers[0xF] = flag;
                 break;
-            case 0xE:                        // 8XYE: Vx <<= 1
+            }
+            case 0xE: {                         // 8XYE: Vx <<= 1
                 u8 flag = (chip8->v_registers[x] >> 7) & 0x1;
                 chip8->v_registers[x] <<= 1;
                 chip8->v_registers[0xF] = flag;
                 break;
+            }
             default:
                 printf("Opcode desconhecido: 0x%04X\n", chip8->opcode);
                 return false;
@@ -206,8 +254,4 @@ bool emulation_cycle(chip8_s *chip8){
     }
 
     return true;
-}
-
-void unload_chip8(chip8_s *chip8){
-    return;
 }
