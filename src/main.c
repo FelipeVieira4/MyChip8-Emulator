@@ -16,7 +16,7 @@ const int teclas[16] = {
 int main(int argc, char *argv[])
 {
     chip8_s chip8;
-    
+
     if (argc < 2){
         printf("ROM não informado!");
     }
@@ -25,6 +25,10 @@ int main(int argc, char *argv[])
 
 
     InitWindow(SCREEN_WIDHT, SCREEN_HEIGHT, "Chip-8 Emulator");
+    InitAudioDevice();
+    
+    Sound beepSound = LoadSound("resources/beep.mp3");
+    
     SetTargetFPS(60);
 
 
@@ -34,11 +38,18 @@ int main(int argc, char *argv[])
             chip8.keypad[k]=IsKeyDown(teclas[k]);
         }
 
-        for (int i = 0; i < 10; i++)emulation_cycle(&chip8);
+        for (int i = 0; i < 10; i++) {
+            if (!emulation_cycle(&chip8)) break;
+        }
 
-        // 3. timers a 60 Hz (uma vez por frame)
         if (chip8.delay_timer > 0) chip8.delay_timer--;
-        if (chip8.sound_timer > 0) chip8.sound_timer--;
+
+        if (chip8.sound_timer > 0) {
+            if (!IsSoundPlaying(beepSound)) {
+                PlaySound(beepSound);
+            }
+            chip8.sound_timer--;
+        }else StopSound(beepSound);
 
         BeginDrawing();
             ClearBackground(BLACK);
@@ -52,6 +63,7 @@ int main(int argc, char *argv[])
     }
 
     CloseWindow();
-    
+    CloseAudioDevice();
+
     return 0;
 }
