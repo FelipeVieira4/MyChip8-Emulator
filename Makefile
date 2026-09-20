@@ -1,6 +1,6 @@
 CC     = clang
 CFLAGS = -Wall -Wextra -g
-TARGET = myChip8
+TARGET = chip8
 
 all:
 	$(CC) $(CFLAGS) src/*.c -o $(TARGET)
