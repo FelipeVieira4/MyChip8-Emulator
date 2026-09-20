@@ -1,9 +1,10 @@
-CC     = clang
-CFLAGS = -Wall -Wextra -g
-TARGET = chip8
+CC      = clang
+CFLAGS  = -Wall -Wextra -g
+LDFLAGS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+TARGET  = chip8
 
 all:
-	$(CC) $(CFLAGS) src/*.c -o $(TARGET)
+	$(CC) $(CFLAGS) src/*.c -o $(TARGET) $(LDFLAGS)
 
 clean:
 	rm -f $(TARGET)
