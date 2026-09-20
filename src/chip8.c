@@ -27,7 +27,9 @@ const u8 font_sheet[80] =
 };
 
 bool init_chip8(chip8_s *chip8,const char *rom_name){
-    chip8->pc=PROGRAM_START;
+    memset(chip8, 0, sizeof(*chip8));
+    
+    chip8->pc = PROGRAM_START;
     chip8->opcode=0;
     chip8->stack_pointer=0;
     chip8->index=0;
