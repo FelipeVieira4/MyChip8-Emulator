@@ -3,6 +3,7 @@
 #include <raylib.h>
 
 #include "chip8.h"
+#include "emulation.h"
 #include "utils/gfx.h"
 
 const int teclas[16] = {
@@ -12,15 +13,23 @@ const int teclas[16] = {
     KEY_FOUR, KEY_R,  KEY_F,     KEY_V         // C, D, E, F
 };
 
+bool init(emulator_s *emulator,chip8_s *chip8,const char *patch_rom){
+    init_emulator(emulator);
+    
+    if (!init_chip8(chip8,patch_rom)) return false;
+    return true;
+}
+
 int main(int argc, char *argv[])
 {
     chip8_s chip8;
+    emulator_s emulator;
 
     if (argc < 2){
         printf("ROM não informado!");
     }
 
-    if (!init_chip8(&chip8,argv[1])) return 0;
+    if (!init(&emulator,&chip8,argv[1])) return 0;
 
     InitAudioDevice();
 
@@ -38,24 +47,27 @@ int main(int argc, char *argv[])
 
 
     while (!WindowShouldClose()){
+        if (IsKeyPressed(KEY_BACKSPACE)) init(&emulator,&chip8,argv[1]);
 
-        for (int k = 0; k < 16; k++) {
-            chip8.keypad[k]=IsKeyDown(teclas[k]);
-        }
-
-        for (int i = 0; i < 10; i++) {
-            if (!emulation_cycle(&chip8)) break;
-        }
-
-        if (chip8.delay_timer > 0) chip8.delay_timer--;
-
-        if (chip8.sound_timer > 0) {
-            if (!IsSoundPlaying(beep_sound)) {
-                PlaySound(beep_sound);
+        emulator_input(&emulator);
+        if (!emulator.paused){
+            for (int k = 0; k < 16; k++) {
+                chip8.keypad[k]=IsKeyDown(teclas[k]);
             }
-            chip8.sound_timer--;
-        }else StopSound(beep_sound);
 
+            for (int cycles = 0; cycles < emulator.cycles_per_frames; cycles++) {
+                if (!emulation_cycle(&chip8)) break;
+            }
+
+            if (chip8.delay_timer > 0) chip8.delay_timer--;
+
+            if (chip8.sound_timer > 0) {
+                if (!IsSoundPlaying(beep_sound)) {
+                    PlaySound(beep_sound);
+                }
+                chip8.sound_timer--;
+            }else StopSound(beep_sound);
+        }
         BeginDrawing();
             ClearBackground(BLACK);
             for(int x=0;x<DISPLAY_WIDTH;x++){
@@ -64,6 +76,8 @@ int main(int argc, char *argv[])
                     if (display_pixel) DrawRectangle(x*UPSCALE_SIZE,y*UPSCALE_SIZE,UPSCALE_SIZE,UPSCALE_SIZE,WHITE);
                 }
             }
+
+            if (emulator.debug_mode) draw_debug(&chip8,&emulator);
         EndDrawing();
     }
 
