@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "chip8.h"
-#include "mystdint.h"
+#include "utils/mystdint.h"
 
 const u8 font_sheet[80] =
 { 

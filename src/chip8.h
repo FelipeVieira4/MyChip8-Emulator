@@ -7,7 +7,7 @@
 #ifndef _CHIP_8_H_
 #define _CHIP_8_H_
 
-#include "mystdint.h"
+#include "utils/mystdint.h"
 #include "stdbool.h"
 
 #define PROGRAM_START 0x200
