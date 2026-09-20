@@ -1,9 +1,8 @@
-#include<stdlib.h>
-#include<stdio.h>
-#include<raylib.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <raylib.h>
 
 #include "chip8.h"
-#include "utils/gfx.h"
 #include "utils/gfx.h"
 
 const int teclas[16] = {

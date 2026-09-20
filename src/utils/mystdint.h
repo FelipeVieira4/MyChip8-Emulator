@@ -4,10 +4,10 @@
 	Last Update:19/08/2026
 */
 
-#ifndef _MYSTDINT_H_
-#define _MYSTDINT_H_
+#ifndef MYSTDINT_H
+#define MYSTDINT_H
 
-#include "stdint.h"
+#include <stdint.h>
 
 typedef uint8_t u8;
 typedef uint16_t u16;

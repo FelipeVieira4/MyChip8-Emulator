@@ -4,8 +4,8 @@
 	Last Update:19/08/2026
 */
 
-#ifndef _CHIP_8_H_
-#define _CHIP_8_H_
+#ifndef CHIP_8_H
+#define CHIP_8_H
 
 #include "utils/mystdint.h"
 #include "stdbool.h"
